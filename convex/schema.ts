@@ -17,9 +17,9 @@ export default defineSchema({
   // Predefined techniques (shared across all users)
   techniques: defineTable({
     name: v.string(),
+    note: v.optional(v.string()),
     category: v.string(),
-    videoUrl: v.string(),
-    createdAt: v.number(),
+    videoUrl: v.optional(v.string()),
   }),
 
   // User-specific progress tracking

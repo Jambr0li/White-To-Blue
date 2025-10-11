@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start"
+    "start": "next start",
+    "convex:dev": "npx convex dev",
+    "dev:all": "concurrently --names \"NEXT,CONVEX\" -c \"bgBlue.bold,bgGreen.bold\" \"pnpm dev\" \"pnpm convex:dev\""
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.3",
@@ -19,6 +21,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "shadcn": "^3.3.1",
     "tailwindcss": "^4",
     "typescript": "^5"

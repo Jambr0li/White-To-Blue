@@ -10,9 +10,8 @@ interface Technique {
   _id: Id<"techniques">;
   name: string;
   category: string;
-  videoUrl: string;
+  videoUrl?: string;
   learned: boolean;
-  createdAt: number;
   learnedAt?: number;
   notes?: string;
   progressId?: Id<"userProgress">;
