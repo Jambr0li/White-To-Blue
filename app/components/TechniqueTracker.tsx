@@ -67,9 +67,22 @@ export default function TechniqueTracker() {
     });
   const seedTechniques = useMutation(api.techniques.seedTechniques);
   const syncUser = useMutation(api.users.syncUser);
+  const resetAllProgress = useMutation(api.techniques.resetAllProgress)
+    .withOptimisticUpdate((localStore) => {
+      const existingTechniques = localStore.getQuery(api.techniques.getAllTechniques, {});
+      if (existingTechniques) {
+        const updatedTechniques = existingTechniques.map(tech => ({
+          ...tech,
+          learned: false,
+          learnedAt: undefined,
+        }));
+        localStore.setQuery(api.techniques.getAllTechniques, {}, updatedTechniques);
+      }
+    });
   const [seeded, setSeeded] = useState(false);
   const [notesInput, setNotesInput] = useState<Record<string, string>>({});
   const [openDialogs, setOpenDialogs] = useState<Set<string>>(new Set());
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   // Sync user with Convex when component mounts
   useEffect(() => {
@@ -145,6 +158,11 @@ export default function TechniqueTracker() {
     });
   };
 
+  const handleResetAll = async () => {
+    await resetAllProgress();
+    setResetDialogOpen(false);
+  };
+
   const formatDate = (timestamp?: number) => {
     if (!timestamp) return null;
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -197,6 +215,43 @@ export default function TechniqueTracker() {
             <p className="text-sm text-gray-600">
               {overall.learned} of {overall.total} techniques mastered ({Math.round(overall.percentage)}%)
             </p>
+          </div>
+
+          {/* Reset Button */}
+          <div className="mt-4 max-w-md mx-auto">
+            <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full" size="sm">
+                  Reset All Progress
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Reset All Progress?</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <p className="text-sm text-gray-600">
+                    This will mark all techniques as not completed. Your notes will be preserved. This action cannot be undone.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setResetDialogOpen(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleResetAll}
+                      className="flex-1"
+                    >
+                      Reset All
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 

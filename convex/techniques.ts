@@ -177,6 +177,36 @@ export const updateUserNotes = mutation({
   },
 });
 
+// Reset all user progress
+export const resetAllProgress = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = identity.subject;
+    
+    // Get all user's progress records
+    const progressRecords = await ctx.db
+      .query("userProgress")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+    
+    // Update all progress records to not learned
+    for (const progress of progressRecords) {
+      await ctx.db.patch(progress._id, {
+        learned: false,
+        learnedAt: undefined,
+        updatedAt: Date.now(),
+      });
+    }
+    
+    return { count: progressRecords.length };
+  },
+});
+
 // Seed initial techniques data
 export const seedTechniques = mutation({
   args: {},
