@@ -39,8 +39,32 @@ interface Technique {
 export default function TechniqueTracker() {
   const { user } = useUser();
   const techniques = useQuery(api.techniques.getAllTechniques);
-  const updateProgress = useMutation(api.techniques.updateUserProgress);
-  const updateNotes = useMutation(api.techniques.updateUserNotes);
+  const updateProgress = useMutation(api.techniques.updateUserProgress)
+    .withOptimisticUpdate((localStore, args) => {
+      const { techniqueId, learned } = args;
+      const existingTechniques = localStore.getQuery(api.techniques.getAllTechniques, {});
+      if (existingTechniques) {
+        const updatedTechniques = existingTechniques.map(tech => 
+          tech._id === techniqueId 
+            ? { ...tech, learned, learnedAt: learned ? Date.now() : undefined }
+            : tech
+        );
+        localStore.setQuery(api.techniques.getAllTechniques, {}, updatedTechniques);
+      }
+    });
+  const updateNotes = useMutation(api.techniques.updateUserNotes)
+    .withOptimisticUpdate((localStore, args) => {
+      const { techniqueId, notes } = args;
+      const existingTechniques = localStore.getQuery(api.techniques.getAllTechniques, {});
+      if (existingTechniques) {
+        const updatedTechniques = existingTechniques.map(tech => 
+          tech._id === techniqueId 
+            ? { ...tech, notes }
+            : tech
+        );
+        localStore.setQuery(api.techniques.getAllTechniques, {}, updatedTechniques);
+      }
+    });
   const seedTechniques = useMutation(api.techniques.seedTechniques);
   const syncUser = useMutation(api.users.syncUser);
   const [seeded, setSeeded] = useState(false);
