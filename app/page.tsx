@@ -1,9 +1,11 @@
 "use client";
 
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
+  const { user } = useUser();
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
       <div className="max-w-4xl mx-auto text-center">
@@ -15,12 +17,18 @@ export default function Home() {
             Track your Brazilian Jiu-Jitsu journey and techniques
           </p>
         </div>
-        
+        {user ? (
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button onClick={() => router.push('/white-to-blue')} className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors">
            Go to White To Blue 
           </button>
         </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            Sign in to get Started
+            <SignInButton />          
+          </div>
+        )}
       </div>
     </div>
   );
