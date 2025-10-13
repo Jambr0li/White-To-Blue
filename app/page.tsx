@@ -2,6 +2,7 @@
 
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const router = useRouter();
@@ -19,14 +20,17 @@ export default function Home() {
         </div>
         {user ? (
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onClick={() => router.push('/white-to-blue')} className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors">
+          <Button onClick={() => router.push('/white-to-blue')} size="lg">
            Go to White To Blue 
-          </button>
+          </Button>
         </div>
         ) : (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            Sign in to get Started
-            <SignInButton />          
+          <div className="flex flex-col items-center gap-4">
+            <SignInButton mode="modal">
+              <Button size="lg" className="cursor-pointer">
+                Sign In
+              </Button>
+            </SignInButton>
           </div>
         )}
       </div>

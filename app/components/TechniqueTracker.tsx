@@ -146,6 +146,12 @@ export default function TechniqueTracker() {
 
   const overall = overallProgress();
 
+  // Get categories that are not 100% complete to open by default
+  const defaultOpenCategories = categories.filter(category => {
+    const progress = calculateProgress(groupedTechniques[category]);
+    return progress.percentage < 100;
+  });
+
   return (
     <main className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 mt-16">
@@ -169,7 +175,7 @@ export default function TechniqueTracker() {
         </div>
 
         {/* Categories Accordion */}
-        <Accordion type="multiple" className="space-y-4">
+        <Accordion type="multiple" defaultValue={defaultOpenCategories} className="space-y-4">
           {categories.map((category) => {
             const categoryTechniques = groupedTechniques[category];
             const progress = calculateProgress(categoryTechniques);
