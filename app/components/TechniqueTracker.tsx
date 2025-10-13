@@ -46,7 +46,6 @@ export default function TechniqueTracker() {
   const [seeded, setSeeded] = useState(false);
   const [notesInput, setNotesInput] = useState<Record<string, string>>({});
   const [openDialogs, setOpenDialogs] = useState<Set<string>>(new Set());
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
 
   // Sync user with Convex when component mounts
   useEffect(() => {
@@ -68,28 +67,6 @@ export default function TechniqueTracker() {
       seedTechniques().then(() => setSeeded(true));
     }
   }, [techniques, seedTechniques, seeded]);
-
-  // Handle Visual Viewport changes for mobile keyboard
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.visualViewport) return;
-
-    const handleViewportResize = () => {
-      if (openDialogs.size > 0) {
-        setViewportHeight(window.visualViewport!.height);
-      }
-    };
-
-    // Set initial viewport height
-    if (openDialogs.size > 0) {
-      setViewportHeight(window.visualViewport.height);
-    }
-
-    window.visualViewport.addEventListener('resize', handleViewportResize);
-    
-    return () => {
-      window.visualViewport?.removeEventListener('resize', handleViewportResize);
-    };
-  }, [openDialogs]);
 
   if (techniques === undefined) {
     return (
@@ -139,10 +116,6 @@ export default function TechniqueTracker() {
         newSet.add(techniqueId);
       } else {
         newSet.delete(techniqueId);
-        // Reset viewport height when no dialogs are open
-        if (newSet.size === 0) {
-          setViewportHeight(null);
-        }
       }
       return newSet;
     });
@@ -278,18 +251,11 @@ export default function TechniqueTracker() {
                                 {technique.notes ? 'Notes' : 'Add Notes'}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent 
-                              className="sm:max-w-[425px] max-w-[95vw] max-h-[90vh] md:max-h-[90vh]"
-                              style={viewportHeight ? {
-                                maxHeight: `${viewportHeight * 0.9}px`,
-                                top: '5%',
-                                transform: 'translateX(-50%)',
-                              } : undefined}
-                            >
+                            <DialogContent className="sm:max-w-[425px] max-w-[95vw] max-h-[90vh]">
                               <DialogHeader>
                                 <DialogTitle>Technique Notes</DialogTitle>
                               </DialogHeader>
-                              <div className="space-y-4 py-4 overflow-y-auto">
+                              <div className="space-y-4 py-4">
                                 <Textarea
                                   placeholder="Add your notes about this technique..."
                                   value={notesInput[technique._id] ?? technique.notes ?? ""}
