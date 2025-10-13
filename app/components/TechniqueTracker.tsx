@@ -251,7 +251,23 @@ export default function TechniqueTracker() {
                                 {technique.notes ? 'Notes' : 'Add Notes'}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px] max-w-[95vw] max-h-[90vh]">
+                            <DialogContent 
+                              className="sm:max-w-[425px] max-w-[95vw] max-h-[90vh]"
+                              onOpenAutoFocus={(e) => {
+                                // Disable auto-focus on mobile
+                                if (window.innerWidth < 768) {
+                                  e.preventDefault();
+                                  return;
+                                }
+                                // Find the textarea and set cursor to end on desktop
+                                if (!e.currentTarget) return;
+                                const textarea = (e.currentTarget as HTMLElement).querySelector('textarea');
+                                if (textarea) {
+                                  const length = textarea.value.length;
+                                  textarea.setSelectionRange(length, length);
+                                }
+                              }}
+                            >
                               <DialogHeader>
                                 <DialogTitle>Technique Notes</DialogTitle>
                               </DialogHeader>
