@@ -5,6 +5,23 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { Video, FileText } from "lucide-react";
 
 interface Technique {
   _id: Id<"techniques">;
@@ -25,8 +42,8 @@ export default function TechniqueTracker() {
   const seedTechniques = useMutation(api.techniques.seedTechniques);
   const syncUser = useMutation(api.users.syncUser);
   const [seeded, setSeeded] = useState(false);
-  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [notesInput, setNotesInput] = useState<Record<string, string>>({});
+  const [openPopovers, setOpenPopovers] = useState<Set<string>>(new Set());
 
   // Sync user with Convex when component mounts
   useEffect(() => {
@@ -75,25 +92,31 @@ export default function TechniqueTracker() {
     });
   };
 
-  const handleNotesToggle = (techniqueId: string) => {
-    const newExpanded = new Set(expandedNotes);
-    if (newExpanded.has(techniqueId)) {
-      newExpanded.delete(techniqueId);
-    } else {
-      newExpanded.add(techniqueId);
-    }
-    setExpandedNotes(newExpanded);
-  };
-
   const handleNotesSave = async (techniqueId: Id<"techniques">) => {
     const notes = notesInput[techniqueId] || "";
-    if (notes.trim()) {
-      await updateNotes({ techniqueId, notes: notes.trim() });
-    }
+    await updateNotes({ techniqueId, notes: notes.trim() });
+    // Close the popover after saving
+    setOpenPopovers(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(techniqueId);
+      return newSet;
+    });
   };
 
   const handleNotesChange = (techniqueId: string, value: string) => {
     setNotesInput(prev => ({ ...prev, [techniqueId]: value }));
+  };
+
+  const handlePopoverChange = (techniqueId: string, open: boolean) => {
+    setOpenPopovers(prev => {
+      const newSet = new Set(prev);
+      if (open) {
+        newSet.add(techniqueId);
+      } else {
+        newSet.delete(techniqueId);
+      }
+      return newSet;
+    });
   };
 
   const formatDate = (timestamp?: number) => {
@@ -108,7 +131,7 @@ export default function TechniqueTracker() {
   const calculateProgress = (categoryTechniques: Technique[]) => {
     const learned = categoryTechniques.filter(t => t.learned).length;
     const total = categoryTechniques.length;
-    return { learned, total, percentage: total > 0 ? Math.round((learned / total) * 100) : 0 };
+    return { learned, total, percentage: total > 0 ? (learned / total) * 100 : 0 };
   };
 
   const overallProgress = () => {
@@ -117,7 +140,7 @@ export default function TechniqueTracker() {
     return {
       learned: totalLearned,
       total: totalTechniques,
-      percentage: totalTechniques > 0 ? Math.round((totalLearned / totalTechniques) * 100) : 0
+      percentage: totalTechniques > 0 ? (totalLearned / totalTechniques) * 100 : 0
     };
   };
 
@@ -125,145 +148,156 @@ export default function TechniqueTracker() {
 
   return (
     <main className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto px-4 mt-16">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             White to Blue Belt Progress
           </h1>
-          <p className="text-lg text-gray-600 mb-4">
+          <p className="text-lg text-gray-600 mb-6">
             Track your Brazilian Jiu-Jitsu technique mastery
           </p>
           
           {/* Overall Progress */}
           <div className="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
             <h2 className="text-xl font-semibold mb-3">Overall Progress</h2>
-            <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
-              <div 
-                className="bg-blue-600 h-4 rounded-full transition-all duration-300"
-                style={{ width: `${overall.percentage}%` }}
-              ></div>
-            </div>
+            <Progress value={overall.percentage} className="h-3 mb-2" />
             <p className="text-sm text-gray-600">
-              {overall.learned} of {overall.total} techniques mastered ({overall.percentage}%)
+              {overall.learned} of {overall.total} techniques mastered ({Math.round(overall.percentage)}%)
             </p>
           </div>
         </div>
 
-        {/* Categories */}
-        <div className="space-y-8">
+        {/* Categories Accordion */}
+        <Accordion type="multiple" className="space-y-4">
           {categories.map((category) => {
             const categoryTechniques = groupedTechniques[category];
             const progress = calculateProgress(categoryTechniques);
             
             return (
-              <div key={category} className="bg-white rounded-lg shadow-md overflow-hidden">
-                {/* Category Header */}
-                <div className="bg-gray-800 text-white p-6">
-                  <h2 className="text-2xl font-bold mb-2">{category}</h2>
-                  <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
-                    <div 
-                      className="bg-green-500 h-3 rounded-full transition-all duration-300"
-                      style={{ width: `${progress.percentage}%` }}
-                    ></div>
+              <AccordionItem 
+                key={category} 
+                value={category}
+                className="bg-white rounded-lg shadow-md border-0 overflow-hidden"
+              >
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                  <div className="flex flex-col items-start gap-3 w-full pr-4">
+                    <h2 className="text-xl font-bold text-gray-900">{category}</h2>
+                    <div className="w-full">
+                      <Progress value={progress.percentage} className="h-2 mb-1" />
+                      <p className="text-sm text-gray-600">
+                        {progress.learned} of {progress.total} mastered ({Math.round(progress.percentage)}%)
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-300">
-                    {progress.learned} of {progress.total} techniques mastered ({progress.percentage}%)
-                  </p>
-                </div>
-
-                {/* Techniques Grid */}
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </AccordionTrigger>
+                
+                <AccordionContent className="px-6 pb-4">
+                  <div className="space-y-3 pt-2">
                     {categoryTechniques.map((technique: Technique) => (
                       <div 
                         key={technique._id}
-                        className={`border rounded-lg p-4 transition-all duration-200 ${
+                        className={`flex flex-col gap-2 p-4 rounded-lg border transition-colors ${
                           technique.learned 
-                            ? 'border-green-500 bg-green-50' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-white border-gray-200'
                         }`}
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <h3 className="font-semibold text-gray-900 flex-1">
+                        {/* First line: Checkbox + Technique name */}
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id={technique._id}
+                            checked={technique.learned}
+                            onCheckedChange={() => handleToggleProgress(technique._id, technique.learned)}
+                            className="mt-1"
+                          />
+                          <label
+                            htmlFor={technique._id}
+                            className="flex-1 text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
                             {technique.name}
-                          </h3>
-                          <label className="flex items-center cursor-pointer ml-2">
-                            <input
-                              type="checkbox"
-                              checked={technique.learned}
-                              onChange={() => handleToggleProgress(technique._id, technique.learned)}
-                              className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                            />
                           </label>
                         </div>
 
-                        {technique.learned && technique.learnedAt && (
-                          <div className="text-xs text-green-700 mb-2 flex items-center">
-                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
-                            </svg>
-                            Learned on {formatDate(technique.learnedAt)}
-                          </div>
-                        )}
-                        
-                        <a
-                          href={technique.videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-2"
-                        >
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
-                          </svg>
-                          Watch Video
-                        </a>
-
-                        {/* Notes Section */}
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <button
-                            onClick={() => handleNotesToggle(technique._id)}
-                            className="text-sm text-gray-600 hover:text-gray-900 flex items-center"
+                        {/* Second line: Actions and status */}
+                        <div className="flex items-center gap-3 ml-7 text-sm">
+                          <a
+                            href={technique.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
                           >
-                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-                            </svg>
-                            {technique.notes ? 'Edit Notes' : 'Add Notes'}
-                          </button>
-                          
-                          {expandedNotes.has(technique._id) && (
-                            <div className="mt-2">
-                              <textarea
-                                className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                rows={3}
-                                placeholder="Add your notes about this technique..."
-                                defaultValue={technique.notes || ""}
-                                onChange={(e) => handleNotesChange(technique._id, e.target.value)}
-                              />
-                              <button
-                                onClick={() => handleNotesSave(technique._id)}
-                                className="mt-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                            <Video className="h-4 w-4" />
+                            <span>Video</span>
+                          </a>
+
+                          <Popover 
+                            open={openPopovers.has(technique._id)}
+                            onOpenChange={(open) => handlePopoverChange(technique._id, open)}
+                          >
+                            <PopoverTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-auto p-0 text-gray-600 hover:text-gray-900 font-normal"
+                                onClick={() => {
+                                  if (!notesInput[technique._id]) {
+                                    setNotesInput(prev => ({ 
+                                      ...prev, 
+                                      [technique._id]: technique.notes || "" 
+                                    }));
+                                  }
+                                }}
                               >
-                                Save Notes
-                              </button>
-                            </div>
-                          )}
-                          
-                          {technique.notes && !expandedNotes.has(technique._id) && (
-                            <p className="mt-2 text-sm text-gray-600 italic">
-                              {technique.notes}
-                            </p>
+                                <FileText className="h-4 w-4 mr-1" />
+                                {technique.notes ? 'Notes' : 'Add Notes'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80" align="start">
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-sm">Technique Notes</h4>
+                                <Textarea
+                                  placeholder="Add your notes about this technique..."
+                                  value={notesInput[technique._id] ?? technique.notes ?? ""}
+                                  onChange={(e) => handleNotesChange(technique._id, e.target.value)}
+                                  rows={4}
+                                  className="resize-none"
+                                />
+                                <Button 
+                                  onClick={() => handleNotesSave(technique._id)}
+                                  className="w-full"
+                                  size="sm"
+                                >
+                                  Save Notes
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+
+                          {technique.learned && technique.learnedAt && (
+                            <>
+                              <span className="text-gray-400">•</span>
+                              <Badge variant="secondary" className="text-xs">
+                                Learned {formatDate(technique.learnedAt)}
+                              </Badge>
+                            </>
                           )}
                         </div>
+
+                        {/* Show notes preview if exists and popover is closed */}
+                        {technique.notes && !openPopovers.has(technique._id) && (
+                          <div className="ml-7 text-sm text-gray-600 italic border-l-2 border-gray-300 pl-3">
+                            {technique.notes}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
+                </AccordionContent>
+              </AccordionItem>
             );
           })}
-        </div>
+        </Accordion>
 
         {techniques.length === 0 && (
           <div className="text-center py-12">
