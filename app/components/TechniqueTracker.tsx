@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import {
   Accordion,
@@ -46,7 +46,7 @@ export default function TechniqueTracker() {
   const [seeded, setSeeded] = useState(false);
   const [notesInput, setNotesInput] = useState<Record<string, string>>({});
   const [openDialogs, setOpenDialogs] = useState<Set<string>>(new Set());
-  const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
 
   // Sync user with Convex when component mounts
   useEffect(() => {
@@ -68,6 +68,28 @@ export default function TechniqueTracker() {
       seedTechniques().then(() => setSeeded(true));
     }
   }, [techniques, seedTechniques, seeded]);
+
+  // Handle Visual Viewport changes for mobile keyboard
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+
+    const handleViewportResize = () => {
+      if (openDialogs.size > 0) {
+        setViewportHeight(window.visualViewport!.height);
+      }
+    };
+
+    // Set initial viewport height
+    if (openDialogs.size > 0) {
+      setViewportHeight(window.visualViewport.height);
+    }
+
+    window.visualViewport.addEventListener('resize', handleViewportResize);
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportResize);
+    };
+  }, [openDialogs]);
 
   if (techniques === undefined) {
     return (
@@ -115,15 +137,12 @@ export default function TechniqueTracker() {
       const newSet = new Set(prev);
       if (open) {
         newSet.add(techniqueId);
-        // Scroll textarea into view after keyboard opens (mobile fix)
-        setTimeout(() => {
-          const textarea = textareaRefs.current[techniqueId];
-          if (textarea) {
-            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 300);
       } else {
         newSet.delete(techniqueId);
+        // Reset viewport height when no dialogs are open
+        if (newSet.size === 0) {
+          setViewportHeight(null);
+        }
       }
       return newSet;
     });
@@ -259,15 +278,19 @@ export default function TechniqueTracker() {
                                 {technique.notes ? 'Notes' : 'Add Notes'}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px] max-w-[95vw] max-h-[90vh]">
+                            <DialogContent 
+                              className="sm:max-w-[425px] max-w-[95vw] max-h-[90vh] md:max-h-[90vh]"
+                              style={viewportHeight ? {
+                                maxHeight: `${viewportHeight * 0.9}px`,
+                                top: '5%',
+                                transform: 'translateX(-50%)',
+                              } : undefined}
+                            >
                               <DialogHeader>
                                 <DialogTitle>Technique Notes</DialogTitle>
                               </DialogHeader>
-                              <div className="space-y-4 py-4">
+                              <div className="space-y-4 py-4 overflow-y-auto">
                                 <Textarea
-                                  ref={(el) => {
-                                    if (el) textareaRefs.current[technique._id] = el;
-                                  }}
                                   placeholder="Add your notes about this technique..."
                                   value={notesInput[technique._id] ?? technique.notes ?? ""}
                                   onChange={(e) => handleNotesChange(technique._id, e.target.value)}

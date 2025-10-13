@@ -120,3 +120,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile keyboard modal fix */
+@media (max-width: 767px) {
+  [data-radix-dialog-content] {
+    align-items: flex-start !important;
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+}
