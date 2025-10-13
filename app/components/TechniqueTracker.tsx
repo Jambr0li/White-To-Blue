@@ -16,12 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Video, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 
 interface Technique {
   _id: Id<"techniques">;
@@ -43,7 +45,7 @@ export default function TechniqueTracker() {
   const syncUser = useMutation(api.users.syncUser);
   const [seeded, setSeeded] = useState(false);
   const [notesInput, setNotesInput] = useState<Record<string, string>>({});
-  const [openPopovers, setOpenPopovers] = useState<Set<string>>(new Set());
+  const [openDialogs, setOpenDialogs] = useState<Set<string>>(new Set());
 
   // Sync user with Convex when component mounts
   useEffect(() => {
@@ -95,8 +97,8 @@ export default function TechniqueTracker() {
   const handleNotesSave = async (techniqueId: Id<"techniques">) => {
     const notes = notesInput[techniqueId] || "";
     await updateNotes({ techniqueId, notes: notes.trim() });
-    // Close the popover after saving
-    setOpenPopovers(prev => {
+    // Close the dialog after saving
+    setOpenDialogs(prev => {
       const newSet = new Set(prev);
       newSet.delete(techniqueId);
       return newSet;
@@ -107,8 +109,8 @@ export default function TechniqueTracker() {
     setNotesInput(prev => ({ ...prev, [techniqueId]: value }));
   };
 
-  const handlePopoverChange = (techniqueId: string, open: boolean) => {
-    setOpenPopovers(prev => {
+  const handleDialogChange = (techniqueId: string, open: boolean) => {
+    setOpenDialogs(prev => {
       const newSet = new Set(prev);
       if (open) {
         newSet.add(techniqueId);
@@ -226,22 +228,12 @@ export default function TechniqueTracker() {
                         </div>
 
                         {/* Second line: Actions and status */}
-                        <div className="flex items-center gap-3 ml-7 text-sm">
-                          <a
-                            href={technique.videoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                        <div className="flex items-center gap-3 text-sm flex-wrap">
+                          <Dialog 
+                            open={openDialogs.has(technique._id)}
+                            onOpenChange={(open) => handleDialogChange(technique._id, open)}
                           >
-                            <Video className="h-4 w-4" />
-                            <span>Video</span>
-                          </a>
-
-                          <Popover 
-                            open={openPopovers.has(technique._id)}
-                            onOpenChange={(open) => handlePopoverChange(technique._id, open)}
-                          >
-                            <PopoverTrigger asChild>
+                            <DialogTrigger asChild>
                               <Button 
                                 variant="ghost" 
                                 size="sm"
@@ -258,27 +250,28 @@ export default function TechniqueTracker() {
                                 <FileText className="h-4 w-4 mr-1" />
                                 {technique.notes ? 'Notes' : 'Add Notes'}
                               </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80" align="start">
-                              <div className="space-y-3">
-                                <h4 className="font-medium text-sm">Technique Notes</h4>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px] max-w-[95vw] max-h-[90vh]">
+                              <DialogHeader>
+                                <DialogTitle>Technique Notes</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
                                 <Textarea
                                   placeholder="Add your notes about this technique..."
                                   value={notesInput[technique._id] ?? technique.notes ?? ""}
                                   onChange={(e) => handleNotesChange(technique._id, e.target.value)}
-                                  rows={4}
+                                  rows={8}
                                   className="resize-none"
                                 />
                                 <Button 
                                   onClick={() => handleNotesSave(technique._id)}
                                   className="w-full"
-                                  size="sm"
                                 >
                                   Save Notes
                                 </Button>
                               </div>
-                            </PopoverContent>
-                          </Popover>
+                            </DialogContent>
+                          </Dialog>
 
                           {technique.learned && technique.learnedAt && (
                             <>
@@ -290,9 +283,9 @@ export default function TechniqueTracker() {
                           )}
                         </div>
 
-                        {/* Show notes preview if exists and popover is closed */}
-                        {technique.notes && !openPopovers.has(technique._id) && (
-                          <div className="ml-7 text-sm text-gray-600 italic border-l-2 border-gray-300 pl-3">
+                        {/* Show notes preview if exists and dialog is closed */}
+                        {technique.notes && !openDialogs.has(technique._id) && (
+                          <div className="text-sm text-gray-600 italic border-l-2 border-gray-300 pl-3">
                             {technique.notes}
                           </div>
                         )}
