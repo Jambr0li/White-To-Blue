@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import {
   Accordion,
@@ -46,6 +46,7 @@ export default function TechniqueTracker() {
   const [seeded, setSeeded] = useState(false);
   const [notesInput, setNotesInput] = useState<Record<string, string>>({});
   const [openDialogs, setOpenDialogs] = useState<Set<string>>(new Set());
+  const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
   // Sync user with Convex when component mounts
   useEffect(() => {
@@ -114,6 +115,13 @@ export default function TechniqueTracker() {
       const newSet = new Set(prev);
       if (open) {
         newSet.add(techniqueId);
+        // Scroll textarea into view after keyboard opens (mobile fix)
+        setTimeout(() => {
+          const textarea = textareaRefs.current[techniqueId];
+          if (textarea) {
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
       } else {
         newSet.delete(techniqueId);
       }
@@ -257,6 +265,9 @@ export default function TechniqueTracker() {
                               </DialogHeader>
                               <div className="space-y-4 py-4">
                                 <Textarea
+                                  ref={(el) => {
+                                    if (el) textareaRefs.current[technique._id] = el;
+                                  }}
                                   placeholder="Add your notes about this technique..."
                                   value={notesInput[technique._id] ?? technique.notes ?? ""}
                                   onChange={(e) => handleNotesChange(technique._id, e.target.value)}
