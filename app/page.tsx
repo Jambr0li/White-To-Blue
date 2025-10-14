@@ -3,17 +3,22 @@
 import { SignUpButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    if (isLoaded && user) {
-      router.push('/white-to-blue');
+    if (isLoaded && user && !hasRedirected) {
+      setHasRedirected(true);
+      // Small delay to ensure Clerk session is fully loaded
+      setTimeout(() => {
+        router.push('/white-to-blue');
+      }, 100);
     }
-  }, [isLoaded, user, router]);
+  }, [isLoaded, user, router, hasRedirected]);
 
   // Show loading state while checking authentication
   if (!isLoaded) {
@@ -41,7 +46,7 @@ export default function Home() {
           </p>
         </div>
         <div className="flex flex-col items-center gap-4">
-          <SignUpButton mode="modal">
+          <SignUpButton mode="modal" forceRedirectUrl="/white-to-blue">
             <Button size="lg" className="cursor-pointer">
               Sign Up
             </Button>
