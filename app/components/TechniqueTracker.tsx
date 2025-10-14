@@ -221,7 +221,7 @@ export default function TechniqueTracker() {
           <div className="mt-4 max-w-md mx-auto">
             <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="w-full" size="sm">
+                <Button variant="outline" className="w-full cursor-pointer" size="sm">
                   Reset All Progress
                 </Button>
               </DialogTrigger>
