@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, useUser } from "@clerk/nextjs";
+import { SignUpButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
@@ -41,11 +41,11 @@ export default function Home() {
           </p>
         </div>
         <div className="flex flex-col items-center gap-4">
-          <SignInButton mode="modal">
+          <SignUpButton mode="modal">
             <Button size="lg" className="cursor-pointer">
-              Sign In
+              Sign Up
             </Button>
-          </SignInButton>
+          </SignUpButton>
         </div>
       </div>
     </div>
