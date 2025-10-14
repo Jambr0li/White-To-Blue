@@ -11,10 +11,10 @@ export default function Home() {
       <div className="max-w-4xl mx-auto text-center">
         <div className="mb-8">
           <h1 className="text-6xl font-bold text-gray-900 mb-4">
-            BJJ Progress
+            Jiu-Jitsu Progress
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            Track your Brazilian Jiu-Jitsu journey and techniques
+            Track your Jiu-Jitsu journey and techniques
           </p>
         </div>
         <div className="flex flex-col items-center gap-4">

@@ -25,7 +25,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "White to Blue Belt - BJJ Progress Tracker",
-  description: "Track your Brazilian Jiu-Jitsu technique mastery from white to blue belt",
+  description: "Track your Jiu-Jitsu technique mastery from white to blue belt",
 };
 
 export default function RootLayout({

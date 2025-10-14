@@ -205,7 +205,7 @@ export default function TechniqueTracker() {
             White to Blue Belt Progress
           </h1>
           <p className="text-lg text-gray-600 mb-6">
-            Track your Brazilian Jiu-Jitsu technique mastery
+            Track your Jiu-Jitsu technique mastery
           </p>
           
           {/* Overall Progress */}
